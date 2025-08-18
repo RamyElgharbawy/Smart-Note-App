@@ -2,9 +2,10 @@ const express = require("express");
 const dbConnection = require("./config/database");
 const morgan = require("morgan");
 const cors = require("cors");
+const globalError = require("./middlewares/errorMiddleware");
+const mountRoutes = require("./routes");
 
 const dotenv = require("dotenv");
-const globalError = require("./middleware/errorMiddleware");
 dotenv.config({ path: "config.env" });
 
 // connect to database
@@ -26,7 +27,14 @@ if (process.env.NODE_ENV === "development") {
   console.log(`mode: ${process.env.NODE_ENV}`);
 }
 
-// Mount routes
+// Mount Routs
+mountRoutes(app);
+
+// handle unknown routes
+// handle unknown routes
+app.all(/(.*)/, (req, res, next) => {
+  new ApiError(`Can't Find this Route: ${req.originalUrl}`, 400);
+});
 
 // Global Error Handling Middleware inside Express
 app.use(globalError);
