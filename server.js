@@ -4,6 +4,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 
 const dotenv = require("dotenv");
+const globalError = require("./middleware/errorMiddleware");
 dotenv.config({ path: "config.env" });
 
 // connect to database
@@ -24,6 +25,11 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
   console.log(`mode: ${process.env.NODE_ENV}`);
 }
+
+// Mount routes
+
+// Global Error Handling Middleware inside Express
+app.use(globalError);
 
 // Create server
 const Port = process.env.PORT || 8000;
