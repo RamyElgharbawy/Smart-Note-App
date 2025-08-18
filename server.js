@@ -1,7 +1,13 @@
 const express = require("express");
+const dbConnection = require("./config/database");
 const morgan = require("morgan");
-const dotenv = require("dotenv");
 const cors = require("cors");
+
+const dotenv = require("dotenv");
+dotenv.config({ path: "config.env" });
+
+// connect to database
+dbConnection();
 
 // create app instance
 const app = express();
@@ -19,8 +25,17 @@ if (process.env.NODE_ENV === "development") {
   console.log(`mode: ${process.env.NODE_ENV}`);
 }
 
-dotenv.config({ path: "config.env" });
+// Create server
+const Port = process.env.PORT || 8000;
+const server = app.listen(Port, () => {
+  console.log(`App Running on port ${Port}`);
+});
 
-app.listen(port, () => {
-  console.log(`App listening on port: ${port}`);
+// @desc  handle rejections error outside express
+process.on("unhandledRejection", (err) => {
+  console.error(`UnhandledRejection Errors: ${err.name} | ${err.message}`);
+  server.close(() => {
+    console.error("Shutting Down.....");
+    process.exit(1);
+  });
 });
