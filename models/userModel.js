@@ -19,7 +19,6 @@ const userSchema = new mongoose.Schema(
     passwordChangedAt: Date,
     passwordResetCode: String,
     passwordResetCodeExpires: Date,
-    passwordResetVerified: Boolean,
   },
   { timestamps: true }
 );

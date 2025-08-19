@@ -34,7 +34,6 @@ if (process.env.NODE_ENV === "development") {
 mountRoutes(app);
 
 // handle unknown routes
-// handle unknown routes
 app.all(/(.*)/, (req, res, next) => {
   new ApiError(`Can't Find this Route: ${req.originalUrl}`, 400);
 });
