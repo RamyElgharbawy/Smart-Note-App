@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const dbConnection = require("./config/database");
 const morgan = require("morgan");
@@ -6,6 +7,7 @@ const globalError = require("./middlewares/errorMiddleware");
 const mountRoutes = require("./routes");
 
 const dotenv = require("dotenv");
+const ApiError = require("./utils/ApiError");
 dotenv.config({ path: "config.env" });
 
 // connect to database
@@ -20,6 +22,7 @@ app.options(/(.*)/, cors());
 
 // parsing json from body
 app.use(express.json({ limit: "20kb" }));
+app.use(express.static(path.join(__dirname, "uploads")));
 
 // log http requests
 if (process.env.NODE_ENV === "development") {
