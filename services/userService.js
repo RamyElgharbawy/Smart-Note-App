@@ -7,6 +7,7 @@ const generateToken = require("../utils/generateToken");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const ApiError = require("../utils/ApiError");
+const TokenBlacklist = require("../models/tokenBlacklistModel");
 
 // @desc      Signup Service
 // @route     POST /api/v1/user/signup
@@ -41,58 +42,9 @@ exports.login = asyncHandler(async (req, res, next) => {
   res.status(200).json({ data: sanitizeUser(user), token });
 });
 
-// @desc  Authentication service Middleware
-exports.protect = asyncHandler(async (req, res, next) => {
-  // 1- check if there is token & if exist get it.
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  }
-  if (!token) {
-    return next(new ApiError("Please login to access this recourse", 401));
-  }
-
-  // 2- verify token (no changes happened, expired time).
-  const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-
-  // 3- verify user if exist.
-  const currentUser = await userModel.findById(decoded.userId);
-
-  if (!currentUser) {
-    return next(new ApiError("This user doesn`t exist", 401));
-  }
-
-  // 4- check user password if changed after token created.
-  if (currentUser.passwordChangedAt) {
-    // convert changed password time format to timestamp format
-    const passwordChangedTimeStamp = parseInt(
-      currentUser.passwordChangedAt.getTime() / 1000,
-      10
-    );
-
-    if (passwordChangedTimeStamp > decoded.iat) {
-      return next(
-        new ApiError(
-          "User has recently changed password, please login again",
-          401
-        )
-      );
-    }
-  }
-
-  // inject current user into request
-  req.user = currentUser;
-
-  next();
-});
-
 // @desc      Change User Image Service
 // @route     PATCH /api/v1/user/profileImage
-// @access    Private
+// @access    Private - Protected
 exports.changeProfileImage = asyncHandler(async (req, res, next) => {
   // 1- find user
   const user = await userModel.findById(req.user._id);
@@ -152,5 +104,43 @@ exports.changeProfileImage = asyncHandler(async (req, res, next) => {
       user: updatedUser,
       imageUrl: `${req.protocol}://${req.get("host")}/${imageUrl}`,
     },
+  });
+});
+
+// @desc      Logout Service
+// @route     POST /api/v1/user/logout
+// @access    Private - Protected
+exports.logout = asyncHandler(async (req, res, next) => {
+  // 1- get token from current user
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+
+  if (!token) {
+    return next(new ApiError("No token provided", 401));
+  }
+  console.log("token", token);
+
+  // 2- decode the token to get expiration
+  const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+  console.log(decoded);
+
+  // 3- add token to blacklist
+  const blackListedToken = await TokenBlacklist.create({
+    token: token,
+    expiresAt: new Date(decoded.exp * 1000),
+  });
+
+  if (!blackListedToken) {
+    return next(new ApiError("Logout error", 500));
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "User successfully logged out",
   });
 });
