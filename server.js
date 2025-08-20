@@ -3,6 +3,11 @@ const express = require("express");
 const dbConnection = require("./config/database");
 const morgan = require("morgan");
 const cors = require("cors");
+const { rateLimit } = require("express-rate-limit");
+const mongoSanitize = require("express-mongo-sanitize");
+const { xss } = require("express-xss-sanitizer");
+const compression = require("compression");
+const hpp = require("hpp");
 const globalError = require("./middlewares/errorMiddleware");
 const mountRoutes = require("./routes");
 
@@ -20,8 +25,11 @@ const app = express();
 app.use(cors());
 app.options(/(.*)/, cors());
 
+// compress all responses
+app.use(compression());
+
 // parsing json from body
-app.use(express.json({ limit: "20kb" }));
+app.use(express.json({ limit: "4mb" }));
 app.use(express.static(path.join(__dirname, "uploads")));
 
 // log http requests
@@ -29,6 +37,28 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
   console.log(`mode: ${process.env.NODE_ENV}`);
 }
+
+// Middleware for sanitize inputs data
+app.use(mongoSanitize());
+app.use(xss());
+
+// Limit each IP to 100 requests per `window` (here, per 15 minutes)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too Many Requests please try again after 15 min",
+});
+app.use("/api/v1/auth", limiter);
+app.use("/api/v1/user", limiter);
+
+// Middleware to protect against HTTP Parameter Pollution attacks
+app.use(
+  hpp({
+    whitelist: ["note"],
+  })
+);
 
 // Mount Routs
 mountRoutes(app);
