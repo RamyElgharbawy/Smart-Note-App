@@ -4,7 +4,6 @@ const dbConnection = require("./config/database");
 const morgan = require("morgan");
 const cors = require("cors");
 const { rateLimit } = require("express-rate-limit");
-const mongoSanitize = require("express-mongo-sanitize");
 const { xss } = require("express-xss-sanitizer");
 const compression = require("compression");
 const hpp = require("hpp");
@@ -39,7 +38,6 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // Middleware for sanitize inputs data
-app.use(mongoSanitize());
 app.use(xss());
 
 // Limit each IP to 100 requests per `window` (here, per 15 minutes)
