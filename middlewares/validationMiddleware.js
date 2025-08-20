@@ -15,11 +15,6 @@ const createValidationMiddleware = (schema, options = {}) => {
         message: detail.message,
       }));
 
-      // Use custom error handler if provided
-      if (customErrorHandler) {
-        return customErrorHandler(errors, req, res, next);
-      }
-
       // Default error response
       return res.status(400).json({
         success: false,

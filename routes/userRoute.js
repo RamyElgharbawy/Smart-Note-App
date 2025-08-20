@@ -8,22 +8,20 @@ const {
 const upload = require("../middlewares/uploadImageMiddleware");
 const authService = require("../services/authService");
 const {
-  signupValidationMiddleware,
-} = require("../utils/validators/signupSchema");
-const {
-  loginValidationMiddleware,
-} = require("../utils/validators/loginValidator");
+  signupValidator,
+  loginValidator,
+} = require("../utils/validators/userValidator");
 
 const router = express.Router();
 
-router.post("/signup", signupValidationMiddleware, signup);
-router.post("/login", loginValidationMiddleware, login);
+router.post("/signup", signupValidator, signup);
+router.post("/login", loginValidator, login);
 router.patch(
   "/profileImage",
   authService.protect,
   upload.single("profileImage"),
   changeProfileImage
 );
-router.post("/logout", authService.protect, loginValidationMiddleware, logout);
+router.post("/logout", authService.protect, loginValidator, logout);
 
 module.exports = router;

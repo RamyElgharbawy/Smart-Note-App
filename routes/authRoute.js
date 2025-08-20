@@ -1,19 +1,13 @@
 const express = require("express");
 const { forgotPassword, resetPassword } = require("../services/authService");
 const {
-  forgetPasswordValidationMiddleware,
-} = require("../utils/validators/forgetPasswordValidator");
-const {
-  resetPasswordValidationMiddleware,
-} = require("../utils/validators/resetPasswordValidator");
+  forgetPasswordValidator,
+  resetPasswordValidator,
+} = require("../utils/validators/authValidator");
 
 const router = express.Router();
 
-router.post(
-  "/forgotPassword",
-  forgetPasswordValidationMiddleware,
-  forgotPassword
-);
-router.post("/resetPassword", resetPasswordValidationMiddleware, resetPassword);
+router.post("/forgotPassword", forgetPasswordValidator, forgotPassword);
+router.post("/resetPassword", resetPasswordValidator, resetPassword);
 
 module.exports = router;
