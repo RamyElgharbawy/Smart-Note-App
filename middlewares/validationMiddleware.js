@@ -1,86 +1,37 @@
-// const Joi = require("joi");
+const createValidationMiddleware = (schema, options = {}) => {
+  return (req, res, next) => {
+    const { source = "body", customErrorHandler = null } = options;
 
-// const validationMiddleware = (schema) => async (req, res, next) => {
-//   const { error, value } = await schema.validateAsync(req.body, {
-//     abortEarly: false, // Return all validation errors, not just the first one
-//     stripUnknown: true, // Remove any additional fields not in schema
-//   });
+    const dataToValidate = req[source];
+    const { error, value } = schema.validate(dataToValidate, {
+      abortEarly: false,
+      stripUnknown: true,
+      ...options,
+    });
 
-//   if (error) {
-//     (isValid = false),
-//       (errors = error.details.map((detail) => ({
-//         field: detail.path[0],
-//         message: detail.message,
-//       })));
+    if (error) {
+      const errors = error.details.map((detail) => ({
+        field: detail.path[0],
+        message: detail.message,
+      }));
 
-//     if (!validation.isValid) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Validation failed",
-//         errors: validation.errors,
-//       });
-//     }
-//   }
-
-//   (isValid = true),
-//     (data = value),
-//     // Add validated data to request object
-//     (req.validatedData = validation.data);
-//   next();
-// };
-
-// module.exports = validationMiddleware;
-// middleware/validation.js
-
-const validateRequest = (schema) => {
-  return async (req, res, next) => {
-    try {
-      // Use validateAsync for async validation
-      const { error, value } = await schema.validateAsync(req.body, {
-        abortEarly: false,
-        stripUnknown: true,
-      });
-      console.log(value);
-      if (error) {
-        const errorMessages = error.details.map((detail) => ({
-          field: detail.path.join("."),
-          message: detail.message,
-        }));
-
-        return res.status(400).json({
-          success: false,
-          message: "Validation failed",
-          errors: errorMessages,
-        });
-      }
-      console.log(value);
-
-      // Replace req.body with the validated data
-      //   req.validatedData = validation.data;
-      next();
-    } catch (error) {
-      // Handle validation errors
-      if (error.details) {
-        const errorMessages = error.details.map((detail) => ({
-          field: detail.path.join("."),
-          message: detail.message,
-        }));
-
-        return res.status(400).json({
-          success: false,
-          message: "Validation failed",
-          errors: errorMessages,
-        });
+      // Use custom error handler if provided
+      if (customErrorHandler) {
+        return customErrorHandler(errors, req, res, next);
       }
 
-      // Handle other errors
-      console.error("Validation error:", error);
-      res.status(500).json({
+      // Default error response
+      return res.status(400).json({
         success: false,
-        message: "Internal server error during validation",
+        message: "Validation failed",
+        errors: errors,
       });
     }
+
+    // Add validated data to request object
+    req.validatedData = value;
+    next();
   };
 };
 
-module.exports = validateRequest;
+module.exports = createValidationMiddleware;

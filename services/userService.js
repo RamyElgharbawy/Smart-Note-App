@@ -123,11 +123,9 @@ exports.logout = asyncHandler(async (req, res, next) => {
   if (!token) {
     return next(new ApiError("No token provided", 401));
   }
-  console.log("token", token);
 
   // 2- decode the token to get expiration
   const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-  console.log(decoded);
 
   // 3- add token to blacklist
   const blackListedToken = await TokenBlacklist.create({

@@ -23,6 +23,7 @@ const schema = buildSchema(`
   
   input NoteFilter {
     title: String
+    ownerId : ID!
     createdAfter: String
     createdBefore: String
   }
@@ -43,7 +44,6 @@ const schema = buildSchema(`
   
   type Mutation {
     createNote(input: CreateNoteInput!): Note!
-    updateNote(id: ID!, input: CreateNoteInput!): Note!
     deleteNote(id: ID!): Boolean!
   }
 `);

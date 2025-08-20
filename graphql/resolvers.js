@@ -1,9 +1,20 @@
+const createValidationMiddleware = require("../middlewares/validationMiddleware");
 const Note = require("../models/noteModel");
+const {
+  createNoteSchema,
+  noteFilterSchema,
+  paginationSchema,
+} = require("../utils/validators/noteValidator");
 
 const root = {
   // Get All notes with filter and pagination resolver
   notes: async ({ page, limit, filter }, { req }) => {
     if (!req.user) throw new Error("Authentication required");
+    // validate pagination
+    createValidationMiddleware(paginationSchema);
+
+    // validate filter
+    createValidationMiddleware(noteFilterSchema);
 
     const skip = (page - 1) * limit;
     let query = { ownerId: req.user._id };
@@ -80,6 +91,8 @@ const root = {
   // Create note resolver
   createNote: async ({ input }, { req }) => {
     if (!req.user) throw new Error("Authentication required");
+    // validate inputs
+    createValidationMiddleware(createNoteSchema);
 
     const note = new Note({
       title: input.title,
